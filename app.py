@@ -1,30 +1,45 @@
 import scipy.stats
 import streamlit as st
 import time
+import pandas as pd
+
+# estas são variáveis persistentes preservadas à medida que o Streamlin executa novamente esse script
+if 'experiment_no' not in st.session_state:
+    st.session_state['experiment_no'] = 0
+
+if 'df_experiment_results' not in st.session_state:
+    st.session_state['df_experiment_results'] = pd.DataFrame(columns=['no', 'iterations', 'mean'])
+
 
 st.header('Jogando uma moeda')
 
-chart = st.line_chart([0.5])
+# placeholder para o gráfico
+chart_placeholder = st.empty()
 
 def toss_coin(n):
-
     trial_outcomes = scipy.stats.bernoulli.rvs(p=0.5, size=n)
 
     mean = None
     outcome_no = 0
     outcome_1_count = 0
 
+    # dataframe para acumular os valores
+    df = pd.DataFrame({"mean": []})
+
     for r in trial_outcomes:
-        outcome_no +=1
+        outcome_no += 1
         if r == 1:
             outcome_1_count += 1
+
         mean = outcome_1_count / outcome_no
-        # adiciona nova linha ao dataframe
+
+        # adiciona nova linha
         df.loc[len(df)] = mean
 
-        # atualiza o gráfico com o dataframe completo
-        chart.plot(df)
-        time.sleep(0.05)
+        # atualiza o gráfico dentro do placeholder
+        chart_placeholder.line_chart(df)
+
+        time.sleep(0.001)
 
     return mean
 
@@ -33,4 +48,17 @@ start_button = st.button('Executar')
 
 if start_button:
     st.write(f'Executando o experimento de {number_of_trials} tentativas.')
+    st.session_state['experiment_no'] += 1
     mean = toss_coin(number_of_trials)
+    st.session_state['df_experiment_results'] = pd.concat([
+        st.session_state['df_experiment_results'],
+        pd.DataFrame(data=[[st.session_state['experiment_no'],
+                            number_of_trials,
+                            mean]],
+                     columns=['no', 'iterations', 'mean'])
+        ],
+        axis=0)
+    st.session_state['df_experiment_results'] = \
+        st.session_state['df_experiment_results'].reset_index(drop=True)
+
+st.write(st.session_state['df_experiment_results'])
