@@ -19,7 +19,11 @@ def toss_coin(n):
         if r == 1:
             outcome_1_count += 1
         mean = outcome_1_count / outcome_no
-        chart = st.line_chart([mean])
+        # adiciona nova linha ao dataframe
+        df.loc[len(df)] = mean
+
+        # atualiza o gráfico com o dataframe completo
+        chart.plot(df)
         time.sleep(0.05)
 
     return mean
